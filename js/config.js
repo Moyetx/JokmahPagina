@@ -12,6 +12,6 @@
  * todos los visitantes. Guía completa: DESPLIEGUE.md
  */
 window.JOKMAH_CONFIG = {
-  supabaseUrl: "",
+  supabaseUrl: "https://tvqkhwanlirouhuutkdn.supabase.co/",
   supabaseAnonKey: "sb_publishable_h67CAPAuqK0C8OtQk1coOA_g10TsJEI"
 };
