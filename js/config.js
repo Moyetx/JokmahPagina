@@ -13,5 +13,5 @@
  */
 window.JOKMAH_CONFIG = {
   supabaseUrl: "",
-  supabaseAnonKey: ""
+  supabaseAnonKey: "sb_publishable_h67CAPAuqK0C8OtQk1coOA_g10TsJEI"
 };
