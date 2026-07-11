@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración — Jokmah</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232a241d'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='38' fill='%23d9b36a' text-anchor='middle'%3EJ%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="cuerpo-admin">
+
+<div id="admin-acceso"></div>
+
+<div class="admin-marco" id="admin-marco" hidden>
+  <aside class="admin-lateral">
+    <div class="admin-marca">
+      <span class="marca-logo" id="admin-logo"></span>
+      <div>
+        <strong id="admin-nombre">Jokmah</strong>
+        <small>Panel de administración</small>
+      </div>
+    </div>
+    <nav class="admin-nav" id="admin-nav">
+      <button data-tab="resumen" class="activo">Resumen y estadísticas</button>
+      <button data-tab="preguntas">Preguntas</button>
+      <button data-tab="secciones">Secciones</button>
+      <button data-tab="buzon">Buzón de preguntas</button>
+      <button data-tab="quejas">Quejas y sugerencias</button>
+      <button data-tab="registros">Visitantes</button>
+      <button data-tab="calendario">Calendario</button>
+      <button data-tab="santoral">Santoral</button>
+      <button data-tab="apariencia">Apariencia</button>
+      <button data-tab="ajustes">Ajustes del sitio</button>
+    </nav>
+    <div class="admin-pie-lateral">
+      <a href="index.html" class="boton secundario mini" style="width:100%">Ver el sitio</a>
+      <button class="boton peligro mini" id="boton-salir" style="width:100%">Cerrar sesión</button>
+    </div>
+  </aside>
+  <main class="admin-contenido" id="admin-contenido"></main>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/store.js"></script>
+<script src="js/calendario.js"></script>
+<script src="js/historia.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jokmah — Grupo juvenil de formación</title>
+<meta name="description" content="Preguntas y respuestas de formación católica para jóvenes: catecismo, teología, liturgia, discernimiento y más.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236f1d33'/%3E%3Ctext x='32' y='45' font-family='Georgia,serif' font-size='38' fill='%23d9b36a' text-anchor='middle'%3EJ%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+<div class="decor-lateral izquierda" hidden></div>
+<div class="decor-lateral derecha" hidden></div>
+
+<header class="cabecera" id="cabecera">
+  <a class="marca" href="#/">
+    <span class="marca-logo" id="marca-logo" aria-hidden="true"></span>
+    <span class="marca-texto">
+      <strong id="marca-nombre">Jokmah</strong>
+      <small id="marca-lema">Grupo juvenil de formación</small>
+    </span>
+  </a>
+  <nav class="nav-principal" id="nav-principal" aria-label="Navegación principal">
+    <a href="#/" data-ancla="inicio">Inicio</a>
+    <a href="#/" data-ancla="secciones">Secciones</a>
+    <a href="#/" data-ancla="calendario">Calendario</a>
+    <a href="#/" data-ancla="buzon">Buzón</a>
+  </nav>
+  <button class="boton-menu" id="boton-menu" aria-label="Abrir menú" aria-expanded="false">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+
+<main id="vista" class="vista"></main>
+
+<footer class="pie" id="pie">
+  <div class="pie-interior">
+    <div class="pie-marca">
+      <strong id="pie-nombre">Jokmah</strong>
+      <p id="pie-lema" class="suave"></p>
+    </div>
+    <div class="pie-redes" id="pie-redes"></div>
+  </div>
+  <p class="pie-nota">Ad maiorem Dei gloriam.</p>
+</footer>
+
+<div id="capa-modales"></div>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/store.js"></script>
+<script src="js/calendario.js"></script>
+<script src="js/historia.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
