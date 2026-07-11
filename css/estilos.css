@@ -740,6 +740,178 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .cal-santoral-nombre { font-family: var(--serif); font-size: 21px; font-weight: 700; margin: 0 0 4px; }
 .cal-temporada { font-size: 13.5px; color: var(--tinta-2); margin: 10px 0 0; }
 
+/* ---------- Santos ---------- */
+
+.cal-santoral-enlace { margin: 0 0 8px; font-size: 13.5px; }
+.cal-santoral-enlace a { font-weight: 600; }
+.cal-santoral-enlace a::after { content: " \2192"; }
+.cal-santoral-enlace.todos { margin: 14px 0 0; padding-top: 10px; border-top: 1px solid var(--borde-suave); }
+
+.rejilla-santos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+.carta-santo {
+  display: flex;
+  flex-direction: column;
+  background: var(--carta);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  overflow: hidden;
+  box-shadow: var(--sombra);
+  transition: transform var(--transicion), box-shadow var(--transicion);
+}
+.carta-santo:hover { transform: translateY(-5px); box-shadow: var(--sombra-alta); }
+.carta-santo-retrato {
+  aspect-ratio: 4 / 5;
+  background-size: cover;
+  background-position: center top;
+  transition: transform 600ms cubic-bezier(.2, .7, .3, 1);
+}
+.carta-santo:hover .carta-santo-retrato { transform: scale(1.035); }
+.carta-santo-texto { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px 16px; }
+.carta-santo-texto strong { font-family: var(--serif); font-size: 20px; line-height: 1.2; color: var(--tinta); }
+.carta-santo-texto small { font-size: 12.5px; color: var(--tinta-2); }
+.carta-santo-fiesta {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--oro);
+}
+
+.ficha-santo { max-width: 880px; margin: 0 auto; padding-top: 10px; }
+.santo-cabecera {
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) 1fr;
+  gap: clamp(20px, 4vw, 40px);
+  align-items: start;
+  background: var(--carta);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: clamp(20px, 3.5vw, 34px);
+  margin: 16px 0 26px;
+}
+.santo-retrato {
+  aspect-ratio: 4 / 5;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center top;
+  box-shadow: var(--sombra);
+}
+.santo-presentacion h1 { font-size: clamp(30px, 4.4vw, 44px); margin-bottom: 4px; }
+.santo-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--oro);
+  margin-bottom: 18px;
+}
+.santo-datos { margin: 0; display: grid; gap: 10px; }
+.santo-datos dt {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.santo-datos dd { margin: 1px 0 0; font-size: 15px; color: var(--tinta-2); }
+@media (max-width: 680px) {
+  .santo-cabecera { grid-template-columns: 1fr; }
+  .santo-retrato { max-width: 300px; margin: 0 auto; width: 100%; }
+  .santo-presentacion { text-align: center; }
+  .santo-datos dd { margin-bottom: 4px; }
+}
+
+.santo-bloque {
+  background: var(--carta);
+  border: 1px solid var(--borde-suave);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: clamp(20px, 3.5vw, 34px);
+  margin-bottom: 22px;
+}
+.santo-bloque > h2 {
+  font-size: 26px;
+  padding-bottom: 10px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--borde-suave);
+}
+.santo-bloque p { line-height: 1.78; }
+.santo-lista { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.santo-lista li { line-height: 1.65; }
+.santo-frase {
+  margin: 0 0 14px;
+  padding: 14px 20px;
+  border-left: 3px solid var(--oro);
+  background: var(--papel-2);
+  border-radius: 0 10px 10px 0;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-style: italic;
+  color: var(--tinta);
+}
+.santo-frase:last-child { margin-bottom: 0; }
+
+.santo-galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.santo-miniatura {
+  aspect-ratio: 4 / 5;
+  border: 0;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  cursor: zoom-in;
+  padding: 0;
+  transition: transform var(--transicion), box-shadow var(--transicion);
+}
+.santo-miniatura:hover { transform: scale(1.04); box-shadow: var(--sombra-alta); }
+
+.telon.visor { background: rgba(20, 6, 10, .88); flex-direction: column; }
+.visor-imagen {
+  max-width: min(92vw, 980px);
+  max-height: 84vh;
+  border-radius: 10px;
+  box-shadow: var(--sombra-alta);
+  animation: modal-entra 300ms ease both;
+}
+.visor-cerrar, .visor-flecha {
+  position: fixed;
+  border: 1px solid rgba(246, 236, 217, .35);
+  background: rgba(42, 36, 29, .55);
+  color: #f6ecd9;
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background var(--transicion);
+}
+.visor-cerrar:hover, .visor-flecha:hover { background: rgba(111, 29, 51, .8); }
+.visor-cerrar { top: 18px; right: 18px; }
+.visor-flecha { top: 50%; transform: translateY(-50%); }
+.visor-flecha.izquierda { left: 14px; }
+.visor-flecha.derecha { right: 14px; }
+.visor-contador {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(246, 236, 217, .8);
+  font-size: 13px;
+  letter-spacing: .1em;
+}
+
 /* ---------- Formularios y buzones ---------- */
 
 .rejilla-buzones {

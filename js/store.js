@@ -7,8 +7,8 @@
 
   const U = window.JUtil;
   const SEED = window.JSeed;
-  const COLECCIONES = ["secciones", "preguntas", "eventos", "temporadas", "santoral", "buzon", "quejas", "registros"];
-  const PUBLICAS = ["secciones", "preguntas", "eventos", "temporadas", "santoral"];
+  const COLECCIONES = ["secciones", "preguntas", "eventos", "temporadas", "santoral", "santos", "buzon", "quejas", "registros", "usuarios"];
+  const PUBLICAS = ["secciones", "preguntas", "eventos", "temporadas", "santoral", "santos"];
 
   /* ---------------- Modo local ---------------- */
 
@@ -27,11 +27,25 @@
           ajustes: JSON.parse(JSON.stringify(SEED.ajustes)),
           colecciones: {}
         };
-        COLECCIONES.forEach((k) => {
-          this._datos.colecciones[k] = JSON.parse(JSON.stringify(SEED[k] || []));
-        });
-        this._guardar();
       }
+      /* Completa colecciones que falten (datos guardados por versiones previas) */
+      let cambio = false;
+      COLECCIONES.forEach((k) => {
+        if (!this._datos.colecciones[k]) {
+          this._datos.colecciones[k] = JSON.parse(JSON.stringify(SEED[k] || []));
+          cambio = true;
+        }
+      });
+      /* Migración: la contraseña única antigua pasa a ser el usuario "admin" */
+      if (this._datos.ajustes.adminHash) {
+        const us = this._datos.colecciones.usuarios;
+        if (us.length === 1 && us[0].hash === SEED.HASH_INICIAL) {
+          us[0].hash = this._datos.ajustes.adminHash;
+        }
+        delete this._datos.ajustes.adminHash;
+        cambio = true;
+      }
+      if (cambio) this._guardar();
     },
 
     _guardar() {
@@ -82,24 +96,33 @@
       return U.comprimirImagen(archivo, limites[uso] || 1600, 0.87);
     },
 
-    /* Admin local: contraseña propia guardada como hash en el navegador. */
-    tieneClave() { return !!this._datos.ajustes.adminHash; },
-    async crearClave(clave) {
-      this._datos.ajustes.adminHash = await U.sha256(clave);
-      this._guardar();
-      sessionStorage.setItem("jokmah-admin", "1");
+    /* Administradores locales: usuarios con contraseña (hash) en este navegador. */
+    async entrar(usuario, clave) {
+      const h = await U.sha256(clave);
+      const u = this._datos.colecciones.usuarios
+        .find((x) => x.usuario === String(usuario).trim() && x.hash === h);
+      if (!u) return false;
+      sessionStorage.setItem("jokmah-admin", u.id);
       return true;
     },
-    async entrar(_usuario, clave) {
-      const h = await U.sha256(clave);
-      if (h === this._datos.ajustes.adminHash) {
-        sessionStorage.setItem("jokmah-admin", "1");
-        return true;
-      }
-      return false;
-    },
     async salir() { sessionStorage.removeItem("jokmah-admin"); },
-    esAdmin() { return sessionStorage.getItem("jokmah-admin") === "1"; },
+    esAdmin() { return !!sessionStorage.getItem("jokmah-admin"); },
+    usuarioActual() {
+      const id = sessionStorage.getItem("jokmah-admin");
+      const u = this._datos.colecciones.usuarios.find((x) => x.id === id);
+      return u ? { id: u.id, nombre: u.usuario } : null;
+    },
+    async cambiarClave(id, nueva) {
+      const u = this._datos.colecciones.usuarios.find((x) => x.id === id);
+      if (!u) return false;
+      u.hash = await U.sha256(nueva);
+      this._guardar();
+      return true;
+    },
+    usaClaveInicial() {
+      return this._datos.colecciones.usuarios
+        .some((u) => u.usuario === "admin" && u.hash === SEED.HASH_INICIAL);
+    },
 
     async reiniciarDatos() {
       localStorage.removeItem(CLAVE);
@@ -169,8 +192,6 @@
       return this._sb.storage.from("imagenes").getPublicUrl(ruta).data.publicUrl;
     },
 
-    tieneClave() { return true; },
-    async crearClave() { return false; },
     async entrar(usuario, clave) {
       const { data, error } = await this._sb.auth.signInWithPassword({ email: usuario, password: clave });
       if (error) return false;
@@ -179,6 +200,15 @@
     },
     async salir() { await this._sb.auth.signOut(); this._sesion = null; },
     esAdmin() { return !!this._sesion; },
+    usuarioActual() {
+      const u = this._sesion && this._sesion.user;
+      return u ? { id: u.id, nombre: u.email } : null;
+    },
+    async cambiarClave(_id, nueva) {
+      const { error } = await this._sb.auth.updateUser({ password: nueva });
+      return !error;
+    },
+    usaClaveInicial() { return false; },
 
     async reiniciarDatos() { /* no aplica en modo online */ }
   };

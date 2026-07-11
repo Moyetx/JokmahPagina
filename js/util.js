@@ -15,6 +15,10 @@
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  /* URL segura para usar en style="background-image:…" dentro de HTML */
+  U.cssUrl = (u) =>
+    "url('" + String(u == null ? "" : u).replace(/'/g, "%27").replace(/"/g, "%22") + "')";
+
   /* Convierte marcas [1], [2]… en llamadas de nota al pie */
   U.marcarNotas = (html) =>
     html.replace(/\[(\d{1,2})\]/g, '<sup class="nota-ref"><a href="#nota-$1">$1</a></sup>');

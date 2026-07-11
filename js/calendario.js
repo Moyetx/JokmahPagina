@@ -117,24 +117,41 @@
     ).join("") + "</ul>";
   }
 
+  /* Ficha completa asociada a una entrada del santoral (enlace explícito
+     por santoId o coincidencia de la fiesta con la fecha). */
+  function fichaDe(entrada, fichas) {
+    if (!fichas || !fichas.length) return null;
+    if (entrada.santoId) {
+      const f = fichas.find((x) => x.id === entrada.santoId);
+      if (f) return f;
+    }
+    const md = String(entrada.fecha).length === 5 ? entrada.fecha : String(entrada.fecha).slice(5);
+    return fichas.find((x) => x.fiesta === md) || null;
+  }
+
   function santoralHoy(datos) {
     const hoy = U.hoyISO();
     const santos = santosDe(hoy, datos.santoral);
     const t = temporadaDe(hoy, datos.temporadas);
+    const fichas = datos.santos || [];
     return (
       '<div class="cal-santoral-hoy"' + (t ? ' style="--tinte:' + colorCss(t.color) + '"' : "") + ">" +
       '<span class="etiqueta-suave">Santoral de hoy · ' + U.fechaLarga(hoy) + "</span>" +
       (santos.length
-        ? santos.map((s) =>
-            '<p class="cal-santoral-nombre">' + U.esc(s.santo) +
-            (s.nota ? ' <span class="suave">— ' + U.esc(s.nota) + "</span>" : "") + "</p>").join("")
+        ? santos.map((s) => {
+            const ficha = fichaDe(s, fichas);
+            return '<p class="cal-santoral-nombre">' + U.esc(s.santo) +
+              (s.nota ? ' <span class="suave">— ' + U.esc(s.nota) + "</span>" : "") + "</p>" +
+              (ficha ? '<p class="cal-santoral-enlace"><a href="#/santo/' + encodeURIComponent(ficha.id) + '">Conocer su historia</a></p>' : "");
+          }).join("")
         : '<p class="cal-santoral-nombre suave">Feria del tiempo ' + (t ? "de " + U.esc(t.nombre) : "litúrgico") + "</p>") +
       (t ? '<p class="cal-temporada">Tiempo litúrgico: <strong>' + U.esc(t.nombre) + "</strong></p>" : "") +
+      '<p class="cal-santoral-enlace todos"><a href="#/santos">Ver todas las fichas de santos</a></p>' +
       "</div>"
     );
   }
 
   window.JCal = {
-    vistaMes, vistaSemana, listaProximos, santoralHoy, temporadaDe, colorCss, santosDe, lunesDe
+    vistaMes, vistaSemana, listaProximos, santoralHoy, temporadaDe, colorCss, santosDe, lunesDe, fichaDe
   };
 })();

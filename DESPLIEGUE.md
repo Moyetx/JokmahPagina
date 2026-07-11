@@ -20,6 +20,8 @@ Para el sitio real necesitas **dos piezas gratuitas**:
 2. Crea un proyecto nuevo (elige la región más cercana). Guarda la contraseña que te pida, aunque no la usaremos a diario.
 3. En el menú lateral abre **SQL Editor → New query**, copia TODO el contenido del archivo [`supabase/esquema.sql`](supabase/esquema.sql) de este repositorio, pégalo y pulsa **Run**. Esto crea las tablas, las reglas de seguridad, la carpeta de imágenes y el contenido inicial (secciones, temporadas litúrgicas y santoral).
 4. Crea el usuario administrador: **Authentication → Users → Add user → Create new user**. Pon tu correo y una contraseña fuerte, y marca **Auto Confirm User**. Con ese correo y contraseña entrarás en `admin.html`.
+   - **¿Más administradores?** El mismo camino: cualquier persona con acceso al proyecto de Supabase puede añadir otro usuario en dos clics, y ese usuario ya entra al panel. La pestaña *Administradores* del panel te recuerda estos pasos.
+   - **Importante:** no actives el registro público (*Sign ups*) en Supabase. En esta página cualquier usuario autenticado tiene permisos de administración, así que las cuentas deben crearse solo a mano.
 5. Copia tus claves: **Project Settings → API**. Necesitas dos cosas:
    - **Project URL** (algo como `https://abcdefg.supabase.co`)
    - **anon public key** (una clave larga; es la clave *pública*, está bien que vaya en el código)
@@ -85,6 +87,7 @@ Lo mismo aplica a los registros de visitantes y a las estadísticas.
 
 ## Problemas frecuentes
 
+- **"¿Cuáles son las credenciales del admin?"** → en modo local (sin Supabase): usuario `admin`, contraseña `Jokmah2026`; cámbiala al entrar. En modo online: el correo y contraseña que creaste en Supabase.
 - **"Hice cambios en el admin y nadie los ve"** → estás en modo local (config.js vacío). Completa el Paso 1.
 - **"No puedo entrar al admin en modo online"** → verifica que creaste el usuario en Supabase con *Auto Confirm User* marcado.
 - **"La página no carga datos"** → puede que Supabase haya pausado el proyecto por inactividad; entra a supabase.com y pulsa *Restore*.

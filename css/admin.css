@@ -244,6 +244,36 @@
 }
 .zona-imagen .vista-previa.logo-previa { background-size: contain; background-repeat: no-repeat; }
 
+/* ---------- Galería del editor de fichas ---------- */
+
+.galeria-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.galeria-editor-item {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid var(--borde);
+}
+.galeria-editor-item .quitar {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(42, 36, 29, .72);
+  color: #f6ecd9;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+.galeria-editor-item .quitar:hover { background: var(--terracota); }
+
 /* ---------- Acceso ---------- */
 
 .acceso-telon {

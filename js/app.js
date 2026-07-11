@@ -14,6 +14,7 @@
     eventos: [],
     temporadas: [],
     santoral: [],
+    santos: [],
     calVista: "semana",
     calFecha: new Date(),
     filtroTiempo: null
@@ -41,13 +42,14 @@
   }
 
   async function cargarDatos() {
-    const [ajustes, secciones, preguntas, eventos, temporadas, santoral] = await Promise.all([
+    const [ajustes, secciones, preguntas, eventos, temporadas, santoral, santos] = await Promise.all([
       Store.getAjustes(),
       Store.listar("secciones"),
       Store.listar("preguntas"),
       Store.listar("eventos"),
       Store.listar("temporadas"),
-      Store.listar("santoral")
+      Store.listar("santoral"),
+      Store.listar("santos")
     ]);
     estado.ajustes = ajustes;
     estado.secciones = secciones.sort((a, b) => (a.orden || 0) - (b.orden || 0));
@@ -55,6 +57,7 @@
     estado.eventos = eventos;
     estado.temporadas = temporadas;
     estado.santoral = santoral;
+    estado.santos = santos.sort((a, b) => String(a.fiesta || "").localeCompare(String(b.fiesta || "")));
   }
 
   function aplicarDecoracion() {
@@ -142,6 +145,8 @@
     window.scrollTo({ top: 0 });
     if (partes[0] === "seccion" && partes[1]) return dibujarSeccion(decodeURIComponent(partes[1]));
     if (partes[0] === "pregunta" && partes[1]) return dibujarPregunta(decodeURIComponent(partes[1]));
+    if (partes[0] === "santos") return dibujarSantos();
+    if (partes[0] === "santo" && partes[1]) return dibujarSanto(decodeURIComponent(partes[1]));
     dibujarInicio();
   }
 
@@ -228,7 +233,7 @@
     if (!panel) return;
     const f = estado.calFecha;
     const esMes = estado.calVista === "mes";
-    const datos = { eventos: estado.eventos, temporadas: estado.temporadas, santoral: estado.santoral };
+    const datos = { eventos: estado.eventos, temporadas: estado.temporadas, santoral: estado.santoral, santos: estado.santos };
     let titulo = esMes
       ? U.MESES[f.getMonth()] + " " + f.getFullYear()
       : "semana del " + Cal.lunesDe(f).getDate() + " de " + U.MESES[Cal.lunesDe(f).getMonth()];
@@ -528,6 +533,136 @@
         }
         pintarValoracion(p);
       }));
+  }
+
+  /* ---------------- Santos ---------------- */
+
+  function fiestaTexto(mmdd) {
+    const [m, d] = String(mmdd || "").split("-").map(Number);
+    return m && d ? d + " de " + U.MESES[m - 1] : "";
+  }
+
+  function retratoSanto(s) {
+    if (s.imagenes && s.imagenes.length) return s.imagenes[0];
+    const inicial = (s.nombre || "S").replace(/^(San |Santa |Santo |Beato |Beata )/i, "").charAt(0).toUpperCase();
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#6f1d33"/><stop offset="1" stop-color="#2c0c15"/></linearGradient></defs>' +
+      '<rect width="600" height="750" fill="url(#g)"/>' +
+      '<circle cx="300" cy="330" r="150" fill="none" stroke="#d9b36a" stroke-opacity=".55" stroke-width="3"/>' +
+      '<text x="300" y="385" font-family="Georgia,serif" font-size="150" fill="#d9b36a" text-anchor="middle">' + inicial + "</text>" +
+      '<rect x="24" y="24" width="552" height="702" fill="none" stroke="#d9b36a" stroke-opacity=".35" stroke-width="2"/>' +
+      "</svg>";
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+
+  function dibujarSantos() {
+    const cartas = estado.santos.map((s) =>
+      '<a class="carta-santo revelar" href="#/santo/' + encodeURIComponent(s.id) + '">' +
+      '<span class="carta-santo-retrato" style="background-image:' + U.cssUrl(retratoSanto(s)) + '"></span>' +
+      '<span class="carta-santo-texto"><strong>' + U.esc(s.nombre) + "</strong>" +
+      (s.titulo ? '<small>' + U.esc(s.titulo) + "</small>" : "") +
+      (s.fiesta ? '<span class="carta-santo-fiesta">' + fiestaTexto(s.fiesta) + "</span>" : "") +
+      "</span></a>"
+    ).join("");
+
+    vista.innerHTML =
+      '<nav class="miga"><a href="#/">Inicio</a><span>/</span><span>Santos</span></nav>' +
+      '<section class="bloque" style="padding-top:18px">' +
+      "<h1>Fichas de santos</h1>" +
+      '<p class="suave" style="max-width:640px">Vidas que demuestran que el Evangelio se puede vivir: su historia, sus milagros, sus palabras y sus obras.</p>' +
+      (cartas
+        ? '<div class="rejilla-santos">' + cartas + "</div>"
+        : '<div class="vacio">Todavía no hay fichas de santos publicadas.</div>') +
+      "</section>";
+    activarRevelado();
+  }
+
+  function dibujarSanto(id) {
+    const s = estado.santos.find((x) => x.id === id);
+    if (!s) { vista.innerHTML = '<div class="vacio bloque">Esta ficha no existe o fue retirada.</div>'; return; }
+
+    const datosVida = [
+      ["Fiesta", fiestaTexto(s.fiesta)],
+      ["Nacimiento", s.nacimiento],
+      ["Fallecimiento", s.fallecimiento],
+      ["Patronazgo", s.patronazgo]
+    ].filter((d) => d[1]);
+
+    const galeria = (s.imagenes || []).map((img, i) =>
+      '<button class="santo-miniatura" data-imagen="' + i + '" style="background-image:' + U.cssUrl(img) + '" aria-label="Ampliar imagen ' + (i + 1) + '"></button>'
+    ).join("");
+
+    const bloque = (titulo, html) =>
+      html ? '<section class="santo-bloque revelar"><h2>' + titulo + "</h2>" + html + "</section>" : "";
+
+    vista.innerHTML =
+      '<nav class="miga"><a href="#/">Inicio</a><span>/</span><a href="#/santos">Santos</a><span>/</span><span>' + U.esc(s.nombre) + "</span></nav>" +
+      '<article class="ficha-santo">' +
+      '<header class="santo-cabecera revelar">' +
+      '<div class="santo-retrato" style="background-image:' + U.cssUrl(retratoSanto(s)) + '"></div>' +
+      '<div class="santo-presentacion">' +
+      "<h1>" + U.esc(s.nombre) + "</h1>" +
+      (s.titulo ? '<p class="santo-titulo">' + U.esc(s.titulo) + "</p>" : "") +
+      (datosVida.length
+        ? '<dl class="santo-datos">' + datosVida.map((d) =>
+            "<div><dt>" + d[0] + "</dt><dd>" + U.esc(d[1]) + "</dd></div>").join("") + "</dl>"
+        : "") +
+      "</div></header>" +
+      (galeria
+        ? '<section class="santo-bloque revelar"><h2>Galería</h2><div class="santo-galeria">' + galeria + "</div></section>"
+        : "") +
+      bloque("Su historia", s.biografia ? U.parrafos(s.biografia) : "") +
+      bloque("Milagros atribuidos",
+        (s.milagros || []).filter(Boolean).length
+          ? '<ul class="santo-lista">' + s.milagros.filter(Boolean).map((m) => "<li>" + U.esc(m) + "</li>").join("") + "</ul>"
+          : "") +
+      bloque("Sus palabras",
+        (s.frases || []).filter(Boolean).length
+          ? s.frases.filter(Boolean).map((f) => '<blockquote class="santo-frase">' + U.esc(f) + "</blockquote>").join("")
+          : "") +
+      bloque("Obras",
+        (s.obras || []).filter(Boolean).length
+          ? '<ul class="santo-lista">' + s.obras.filter(Boolean).map((o) => "<li>" + U.esc(o) + "</li>").join("") + "</ul>"
+          : "") +
+      bloque("Para saber más", s.extra ? U.parrafos(s.extra) : "") +
+      "</article>";
+
+    U.$$(".santo-miniatura", vista).forEach((b) =>
+      b.addEventListener("click", () => abrirVisor(s.imagenes, Number(b.dataset.imagen))));
+    activarRevelado();
+  }
+
+  function abrirVisor(imagenes, indice) {
+    const capa = U.$("#capa-modales");
+    let i = indice;
+    const pintar = () => {
+      capa.innerHTML =
+        '<div class="telon visor" role="dialog" aria-modal="true" aria-label="Galería de imágenes">' +
+        '<img class="visor-imagen" src="' + U.esc(imagenes[i]) + '" alt="">' +
+        (imagenes.length > 1
+          ? '<button class="visor-flecha izquierda" aria-label="Anterior">&#8249;</button>' +
+            '<button class="visor-flecha derecha" aria-label="Siguiente">&#8250;</button>'
+          : "") +
+        '<button class="visor-cerrar" aria-label="Cerrar">&times;</button>' +
+        '<span class="visor-contador">' + (i + 1) + " / " + imagenes.length + "</span>" +
+        "</div>";
+      U.$(".visor-cerrar", capa).addEventListener("click", cerrar);
+      capa.firstChild.addEventListener("click", (ev) => { if (ev.target === capa.firstChild) cerrar(); });
+      const izq = U.$(".visor-flecha.izquierda", capa);
+      const der = U.$(".visor-flecha.derecha", capa);
+      if (izq) izq.addEventListener("click", () => { i = (i - 1 + imagenes.length) % imagenes.length; pintar(); });
+      if (der) der.addEventListener("click", () => { i = (i + 1) % imagenes.length; pintar(); });
+    };
+    const teclas = (ev) => {
+      if (ev.key === "Escape") cerrar();
+      if (ev.key === "ArrowLeft" && imagenes.length > 1) { i = (i - 1 + imagenes.length) % imagenes.length; pintar(); }
+      if (ev.key === "ArrowRight" && imagenes.length > 1) { i = (i + 1) % imagenes.length; pintar(); }
+    };
+    const cerrar = () => { capa.innerHTML = ""; document.removeEventListener("keydown", teclas); };
+    document.addEventListener("keydown", teclas);
+    pintar();
   }
 
   /* ---------------- Ficha del visitante ---------------- */

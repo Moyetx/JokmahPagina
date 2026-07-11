@@ -25,7 +25,12 @@ publicar en cualquier hosting estático gratuito.
   **santoral del día**.
 - Ficha ligera de visitante al entrar (nombre o apodo, edad y estado:
   laico, sacerdote, seminarista, monja…), sin registro formal.
+- **Fichas de santos**: galería pública en `#/santos` y vista completa de
+  cada santo con galería de imágenes (con visor ampliado), su historia,
+  milagros atribuidos, frases, obras y datos de su vida; enlazadas desde
+  el santoral del día.
 - Decorable con fondo de pantalla e imágenes verticales laterales.
+- Diseño responsivo: teléfono, tableta y escritorio.
 
 **Panel de administración** (`admin.html`)
 - Editor de preguntas con los dos formatos y **etiquetas** que colocan una
@@ -34,8 +39,20 @@ publicar en cualquier hosting estático gratuito.
 - Estadísticas: consultas totales, preguntas más consultadas y votos.
 - Buzones y registro de visitantes con **descarga en CSV**.
 - Gestión del calendario, temporadas litúrgicas y santoral.
+- Editor de **fichas de santos** con subida múltiple de imágenes.
 - Apariencia: fondo, laterales e intensidad del velo.
 - Ajustes: nombre, lema, logo, misión, objetivo y redes sociales.
+- **Administradores**: cualquier administrador puede crear o eliminar
+  otros administradores y cambiar su contraseña.
+
+## Credenciales de administración
+
+- **Modo local (pruebas)**: usuario `admin`, contraseña `Jokmah2026`.
+  Cámbiala en cuanto entres (pestaña Administradores). Estos usuarios
+  viven en el navegador donde se usan.
+- **Modo online**: el administrador es el usuario que tú creas en
+  Supabase (Authentication → Users → Add user); se entra con ese correo
+  y contraseña. Más administradores: mismo camino, dos clics.
 
 ## Probarlo en tu computadora
 
@@ -45,8 +62,8 @@ No requiere instalación. Con Python:
 python3 -m http.server 8080
 ```
 
-y abre http://localhost:8080 (el admin en http://localhost:8080/admin.html;
-la primera vez te pedirá crear una contraseña). En este modo local los datos
+y abre http://localhost:8080 (el admin en http://localhost:8080/admin.html,
+usuario `admin`, contraseña `Jokmah2026`). En este modo local los datos
 se guardan en tu navegador.
 
 ## Publicarlo online

@@ -14,9 +14,11 @@
     eventos: [],
     temporadas: [],
     santoral: [],
+    santos: [],
     buzon: [],
     quejas: [],
-    registros: []
+    registros: [],
+    usuarios: []
   };
 
   let tabActual = "resumen";
@@ -33,23 +35,24 @@
   function dibujarAcceso() {
     const acceso = U.$("#admin-acceso");
     const esLocal = Store.modo === "local";
-    const crear = esLocal && !Store.tieneClave();
     acceso.innerHTML =
       '<div class="acceso-telon"><form class="acceso-caja" id="form-acceso">' +
       '<span class="etiqueta-suave">' + (esLocal ? "Modo local (pruebas)" : "Modo online") + "</span>" +
-      "<h1>" + (crear ? "Crea tu acceso" : "Administración") + "</h1>" +
+      "<h1>Administración</h1>" +
       '<p class="suave" style="font-size:14px">' +
-      (crear
-        ? "Es tu primera vez aquí: elige una contraseña de administrador para este navegador."
-        : esLocal
-          ? "Introduce tu contraseña de administrador."
-          : "Entra con el correo y la contraseña del administrador (Supabase Auth).") +
+      (esLocal
+        ? "Entra con tu usuario y contraseña de administrador."
+        : "Entra con el correo y la contraseña del administrador (Supabase Auth).") +
       "</p>" +
-      (!esLocal ? '<label class="campo"><span>Correo</span><input name="usuario" type="email" required autocomplete="username"></label>' : "") +
-      '<label class="campo"><span>Contraseña</span><input name="clave" type="password" required minlength="6" autocomplete="current-password"></label>' +
-      (crear ? '<label class="campo"><span>Repite la contraseña</span><input name="clave2" type="password" required minlength="6"></label>' : "") +
+      (esLocal
+        ? '<label class="campo"><span>Usuario</span><input name="usuario" required autocomplete="username"></label>'
+        : '<label class="campo"><span>Correo</span><input name="usuario" type="email" required autocomplete="username"></label>') +
+      '<label class="campo"><span>Contraseña</span><input name="clave" type="password" required autocomplete="current-password"></label>' +
       '<p class="error" id="acceso-error"></p>' +
-      '<button class="boton" style="width:100%">' + (crear ? "Crear y entrar" : "Entrar") + "</button>" +
+      '<button class="boton" style="width:100%">Entrar</button>' +
+      (esLocal && Store.usaClaveInicial()
+        ? '<p class="suave" style="font-size:12.5px;margin:14px 0 0;background:var(--papel-2);border:1px solid var(--borde-suave);border-radius:10px;padding:10px 14px">Primera vez: usuario <strong>admin</strong>, contraseña <strong>Jokmah2026</strong>. Cámbiala en cuanto entres (pestaña Administradores).</p>'
+        : "") +
       '<p class="suave centro" style="font-size:12.5px;margin:16px 0 0"><a href="index.html">Volver al sitio</a></p>' +
       "</form></div>";
 
@@ -58,12 +61,6 @@
       const f = new FormData(ev.target);
       const error = U.$("#acceso-error");
       error.textContent = "";
-      if (crear) {
-        if (f.get("clave") !== f.get("clave2")) { error.textContent = "Las contraseñas no coinciden."; return; }
-        await Store.crearClave(String(f.get("clave")));
-        acceso.innerHTML = "";
-        return abrirPanel();
-      }
       const ok = await Store.entrar(String(f.get("usuario") || ""), String(f.get("clave")));
       if (!ok) { error.textContent = "Acceso incorrecto. Inténtalo de nuevo."; return; }
       acceso.innerHTML = "";
@@ -96,12 +93,14 @@
   }
 
   async function cargarTodo() {
-    const [ajustes, secciones, preguntas, eventos, temporadas, santoral, buzon, quejas, registros] =
+    const [ajustes, secciones, preguntas, eventos, temporadas, santoral, santos, buzon, quejas, registros, usuarios] =
       await Promise.all([
         Store.getAjustes(),
         Store.listar("secciones"), Store.listar("preguntas"),
         Store.listar("eventos"), Store.listar("temporadas"), Store.listar("santoral"),
-        Store.listar("buzon"), Store.listar("quejas"), Store.listar("registros")
+        Store.listar("santos"),
+        Store.listar("buzon"), Store.listar("quejas"), Store.listar("registros"),
+        Store.listar("usuarios")
       ]);
     D.ajustes = ajustes;
     D.secciones = secciones.sort((a, b) => (a.orden || 0) - (b.orden || 0));
@@ -109,6 +108,8 @@
     D.eventos = eventos.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
     D.temporadas = temporadas.sort((a, b) => String(a.inicio).localeCompare(String(b.inicio)));
     D.santoral = santoral.sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
+    D.santos = santos.sort((a, b) => String(a.fiesta || "").localeCompare(String(b.fiesta || "")));
+    D.usuarios = usuarios.sort((a, b) => String(a.creado || "").localeCompare(String(b.creado || "")));
     D.buzon = buzon.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     D.quejas = quejas.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
     D.registros = registros.sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
@@ -118,8 +119,8 @@
     const mapa = {
       resumen: tabResumen, preguntas: tabPreguntas, secciones: tabSecciones,
       buzon: tabBuzon, quejas: tabQuejas, registros: tabRegistros,
-      calendario: tabCalendario, santoral: tabSantoral,
-      apariencia: tabApariencia, ajustes: tabAjustes
+      calendario: tabCalendario, santoral: tabSantoral, fichas: tabFichas,
+      apariencia: tabApariencia, ajustes: tabAjustes, administradores: tabAdministradores
     };
     (mapa[tabActual] || tabResumen)();
   }
@@ -649,6 +650,11 @@
       '<label class="campo"><span>Nota (memoria, fiesta…)</span><input name="nota" value="' + U.esc(s ? s.nota || "" : "") + '"></label>' +
       "</div>" +
       '<label class="campo"><span>Santo o celebración</span><input name="santo" required value="' + U.esc(s ? s.santo : "") + '"></label>' +
+      '<label class="campo"><span>Ficha completa (opcional)</span><select name="santoId">' +
+      '<option value="">— Sin ficha —</option>' +
+      D.santos.map((x) => '<option value="' + x.id + '"' + (s && s.santoId === x.id ? " selected" : "") + ">" + U.esc(x.nombre) + "</option>").join("") +
+      "</select></label>" +
+      '<p class="pista">Si la fiesta de una ficha coincide con esta fecha, el enlace se crea solo; el selector es para casos especiales.</p>' +
       '<div class="barra-acciones"><button class="boton" type="submit">Guardar</button>' +
       '<button class="boton secundario" type="button" data-cancelar>Cancelar</button></div></form>';
 
@@ -688,7 +694,8 @@
         id: s ? s.id : U.uid(),
         fecha: String(f.get("fecha")).slice(5),
         santo: String(f.get("santo")).trim(),
-        nota: String(f.get("nota")).trim()
+        nota: String(f.get("nota")).trim(),
+        santoId: String(f.get("santoId")) || null
       };
       await Store.guardar("santoral", nuevo);
       const i = D.santoral.findIndex((x) => x.id === nuevo.id);
@@ -699,13 +706,254 @@
     });
   }
 
+  /* ================= Fichas de santos ================= */
+
+  function tabFichas(editar) {
+    if (editar !== undefined) return editorFicha(editar);
+
+    const filas = D.santos.map((s) => {
+      const [m, d] = String(s.fiesta || "").split("-").map(Number);
+      return (
+        '<div class="fila-admin"><div class="info"><strong>' + U.esc(s.nombre) + "</strong>" +
+        '<p class="suave">' + (s.titulo ? U.esc(s.titulo) + " — " : "") +
+        (m ? "fiesta el " + d + " de " + U.MESES[m - 1] : "sin fiesta asignada") +
+        " — " + ((s.imagenes || []).length) + " imágenes</p></div>" +
+        '<div class="acciones"><button class="boton secundario mini" data-editar="' + s.id + '">Editar</button>' +
+        '<button class="boton peligro mini" data-borrar="' + s.id + '">Eliminar</button></div></div>'
+      );
+    }).join("");
+
+    contenido().innerHTML =
+      cabecera("Fichas de santos", "La vista completa de cada santo: galería de imágenes, historia, milagros atribuidos, frases, obras y más. Se enlazan solas con el santoral cuando la fiesta coincide.") +
+      '<div class="barra-acciones"><button class="boton" id="nueva-ficha">Nueva ficha</button>' +
+      '<a class="boton secundario mini" href="index.html#/santos" target="_blank" rel="noopener">Ver la galería pública</a></div>' +
+      '<div class="lista-admin">' + (filas || '<p class="vacio">Aún no hay fichas de santos.</p>') + "</div>";
+
+    U.$("#nueva-ficha").addEventListener("click", () => tabFichas(null));
+    U.$$("[data-editar]", contenido()).forEach((b) =>
+      b.addEventListener("click", () => tabFichas(D.santos.find((x) => x.id === b.dataset.editar))));
+    U.$$("[data-borrar]", contenido()).forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (!confirm("¿Eliminar esta ficha de santo?")) return;
+        await Store.borrar("santos", b.dataset.borrar);
+        D.santos = D.santos.filter((x) => x.id !== b.dataset.borrar);
+        U.aviso("Ficha eliminada.");
+        tabFichas();
+      }));
+  }
+
+  function editorFicha(s) {
+    const nuevo = !s;
+    s = s || {
+      id: "", nombre: "", titulo: "", fiesta: "", nacimiento: "", fallecimiento: "",
+      patronazgo: "", biografia: "", milagros: [], frases: [], obras: [], extra: "", imagenes: []
+    };
+    const imagenes = (s.imagenes || []).slice();
+
+    contenido().innerHTML =
+      cabecera(nuevo ? "Nueva ficha de santo" : "Editar ficha", "Rellena solo lo que tengas: los bloques vacíos no se muestran en el sitio.") +
+      '<form class="editor" id="form-ficha">' +
+      '<div class="dos-columnas">' +
+      '<label class="campo"><span>Nombre</span><input name="nombre" required value="' + U.esc(s.nombre) + '" placeholder="San…"></label>' +
+      '<label class="campo"><span>Título</span><input name="titulo" value="' + U.esc(s.titulo || "") + '" placeholder="Mártir, doctora de la Iglesia…"></label>' +
+      '<label class="campo"><span>Fiesta (se repite cada año)</span><input name="fiesta" type="date" value="' + U.esc(s.fiesta ? "2026-" + s.fiesta : "") + '"></label>' +
+      '<label class="campo"><span>Patronazgo</span><input name="patronazgo" value="' + U.esc(s.patronazgo || "") + '"></label>' +
+      '<label class="campo"><span>Nacimiento</span><input name="nacimiento" value="' + U.esc(s.nacimiento || "") + '" placeholder="Lugar, año"></label>' +
+      '<label class="campo"><span>Fallecimiento</span><input name="fallecimiento" value="' + U.esc(s.fallecimiento || "") + '" placeholder="Lugar, fecha"></label>' +
+      "</div>" +
+      '<hr class="separador-suave"><h3>Galería de imágenes</h3>' +
+      '<p class="pista">La primera imagen es el retrato principal. En modo online se suben en calidad original.</p>' +
+      '<div class="galeria-editor" id="galeria-editor"></div>' +
+      '<input type="file" accept="image/*" multiple hidden id="archivos-ficha">' +
+      '<button type="button" class="boton secundario mini" id="subir-imagenes">Añadir imágenes</button>' +
+      '<hr class="separador-suave"><h3>Contenido</h3>' +
+      '<label class="campo"><span>Su historia</span><textarea name="biografia" rows="8" placeholder="Separa los párrafos con una línea en blanco.">' + U.esc(s.biografia || "") + "</textarea></label>" +
+      bloqueDinamico("lista-milagros", "milagro", "Milagros atribuidos", "Uno por recuadro.", s.milagros, true) +
+      "<div style='height:14px'></div>" +
+      bloqueDinamico("lista-frases", "frase", "Frases", "Sus palabras, una por recuadro.", s.frases, true) +
+      "<div style='height:14px'></div>" +
+      bloqueDinamico("lista-obras", "obra", "Obras", "Escritos, fundaciones, legado…", s.obras, true) +
+      '<label class="campo" style="margin-top:16px"><span>Para saber más (opcional)</span><textarea name="extra" rows="3">' + U.esc(s.extra || "") + "</textarea></label>" +
+      '<hr class="separador-suave">' +
+      '<div class="barra-acciones">' +
+      '<button class="boton" type="submit">' + (nuevo ? "Crear ficha" : "Guardar cambios") + "</button>" +
+      '<button class="boton secundario" type="button" id="cancelar-ficha">Volver</button>' +
+      "</div></form>";
+
+    const form = U.$("#form-ficha");
+    const galeria = U.$("#galeria-editor");
+
+    function pintarGaleria() {
+      galeria.innerHTML = imagenes.length
+        ? imagenes.map((img, i) =>
+            '<div class="galeria-editor-item" style="background-image:' + U.cssUrl(img) + '">' +
+            (i === 0 ? '<span class="insignia" style="position:absolute;top:6px;left:6px">Principal</span>' : "") +
+            '<button type="button" class="quitar" data-imagen="' + i + '" title="Quitar">&times;</button></div>'
+          ).join("")
+        : '<p class="suave" style="font-size:13px;margin:0">Sin imágenes todavía.</p>';
+      U.$$("[data-imagen]", galeria).forEach((b) =>
+        b.addEventListener("click", () => { imagenes.splice(Number(b.dataset.imagen), 1); pintarGaleria(); }));
+    }
+    pintarGaleria();
+
+    const entrada = U.$("#archivos-ficha");
+    U.$("#subir-imagenes").addEventListener("click", () => entrada.click());
+    entrada.addEventListener("change", async () => {
+      const archivos = Array.from(entrada.files || []);
+      if (!archivos.length) return;
+      const boton = U.$("#subir-imagenes");
+      boton.disabled = true;
+      for (let i = 0; i < archivos.length; i++) {
+        boton.textContent = "Subiendo " + (i + 1) + " de " + archivos.length + "…";
+        try {
+          imagenes.push(await Store.subirImagen(archivos[i], "santos"));
+        } catch (e) {
+          U.aviso("No se pudo subir una imagen: " + (e.message || e));
+        }
+      }
+      entrada.value = "";
+      boton.disabled = false;
+      boton.textContent = "Añadir imágenes";
+      pintarGaleria();
+    });
+
+    form.addEventListener("click", (ev) => {
+      const anadir = ev.target.closest("[data-anadir]");
+      if (anadir) {
+        U.$("#" + anadir.dataset.anadir).insertAdjacentHTML("beforeend",
+          filaDinamica(anadir.dataset.nombre, "", anadir.dataset.alto === "1"));
+        return;
+      }
+      const quitar = ev.target.closest(".fila-dinamica .quitar");
+      if (quitar) quitar.closest(".fila-dinamica").remove();
+    });
+
+    U.$("#cancelar-ficha").addEventListener("click", () => tabFichas());
+
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const f = new FormData(form);
+      const ficha = Object.assign({}, s, {
+        nombre: String(f.get("nombre")).trim(),
+        titulo: String(f.get("titulo")).trim(),
+        fiesta: String(f.get("fiesta")).slice(5),
+        patronazgo: String(f.get("patronazgo")).trim(),
+        nacimiento: String(f.get("nacimiento")).trim(),
+        fallecimiento: String(f.get("fallecimiento")).trim(),
+        biografia: String(f.get("biografia")).trim(),
+        milagros: leerLista(form, "milagro"),
+        frases: leerLista(form, "frase"),
+        obras: leerLista(form, "obra"),
+        extra: String(f.get("extra")).trim(),
+        imagenes
+      });
+      if (!ficha.id) ficha.id = U.uid();
+      await Store.guardar("santos", ficha);
+      const i = D.santos.findIndex((x) => x.id === ficha.id);
+      if (i >= 0) D.santos[i] = ficha; else D.santos.push(ficha);
+      D.santos.sort((a, b) => String(a.fiesta || "").localeCompare(String(b.fiesta || "")));
+      U.aviso("Ficha guardada.");
+      tabFichas();
+    });
+  }
+
+  /* ================= Administradores ================= */
+
+  function tabAdministradores() {
+    if (Store.modo !== "local") {
+      contenido().innerHTML =
+        cabecera("Administradores", "En modo online los administradores son usuarios de Supabase: cualquiera de ellos puede crear otros desde el panel de Supabase en un minuto.") +
+        '<div class="editor"><h3>Añadir otro administrador</h3>' +
+        '<ol style="line-height:1.9;padding-left:20px;margin:0 0 8px">' +
+        "<li>Entra en <strong>supabase.com</strong> con la cuenta del proyecto.</li>" +
+        "<li>Abre <strong>Authentication → Users → Add user → Create new user</strong>.</li>" +
+        "<li>Escribe el correo y una contraseña fuerte y marca <strong>Auto Confirm User</strong>.</li>" +
+        "<li>Esa persona ya puede entrar en <code>admin.html</code> con esas credenciales.</li></ol>" +
+        '<p class="pista">Por seguridad no actives el registro público (Sign ups) en Supabase: cualquier usuario autenticado tiene permisos de administración sobre el contenido.</p></div>' +
+        '<div class="editor"><h3>Tu cuenta</h3>' +
+        '<p class="suave" style="font-size:14px">Sesión iniciada como <strong>' + U.esc((Store.usuarioActual() || {}).nombre || "") + "</strong>.</p>" +
+        '<div class="barra-acciones"><button class="boton secundario mini" id="cambiar-clave-nube">Cambiar mi contraseña</button></div></div>';
+      const b = U.$("#cambiar-clave-nube");
+      b.addEventListener("click", async () => {
+        const nueva = prompt("Nueva contraseña (mínimo 8 caracteres):");
+        if (!nueva || nueva.length < 8) { if (nueva !== null) U.aviso("Demasiado corta."); return; }
+        const ok = await Store.cambiarClave(null, nueva);
+        U.aviso(ok ? "Contraseña actualizada." : "No se pudo cambiar la contraseña.");
+      });
+      return;
+    }
+
+    const actual = Store.usuarioActual() || {};
+    const filas = D.usuarios.map((u) =>
+      '<div class="fila-admin"><div class="info"><strong>' + U.esc(u.usuario) +
+      (u.id === actual.id ? ' <span class="insignia">Tú</span>' : "") + "</strong>" +
+      '<p class="suave">Creado el ' + fechaTabla(u.creado).split(" ")[0] + "</p></div>" +
+      '<div class="acciones">' +
+      (u.id === actual.id
+        ? '<button class="boton secundario mini" data-clave="' + u.id + '">Cambiar mi contraseña</button>'
+        : '<button class="boton peligro mini" data-borrar="' + u.id + '">Eliminar</button>') +
+      "</div></div>"
+    ).join("");
+
+    contenido().innerHTML =
+      cabecera("Administradores", "Los usuarios que pueden entrar a este panel en este navegador. Cualquier administrador puede crear otros." +
+        (Store.usaClaveInicial() ? " Atención: la cuenta admin conserva la contraseña inicial; cámbiala ahora." : "")) +
+      '<form class="editor" id="form-usuario"><h3>Nuevo administrador</h3>' +
+      '<div class="dos-columnas">' +
+      '<label class="campo"><span>Usuario</span><input name="usuario" required minlength="3" maxlength="30" placeholder="nombre corto, sin espacios"></label>' +
+      '<label class="campo"><span>Contraseña</span><input name="clave" type="password" required minlength="6"></label>' +
+      "</div>" +
+      '<div class="barra-acciones"><button class="boton" type="submit">Crear administrador</button></div></form>' +
+      '<div class="lista-admin">' + filas + "</div>" +
+      '<p class="pista" style="margin-top:16px">Nota del modo local: estos usuarios viven en este navegador. En el sitio publicado con Supabase, los administradores se gestionan desde Supabase (esta pestaña te lo explica al estar en modo online).</p>';
+
+    U.$("#form-usuario").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const f = new FormData(ev.target);
+      const usuario = String(f.get("usuario")).trim().toLowerCase().replace(/\s+/g, "");
+      if (D.usuarios.some((u) => u.usuario === usuario)) { U.aviso("Ese usuario ya existe."); return; }
+      const nuevo = {
+        id: U.uid(),
+        usuario,
+        hash: await U.sha256(String(f.get("clave"))),
+        creado: new Date().toISOString()
+      };
+      await Store.guardar("usuarios", nuevo);
+      D.usuarios.push(nuevo);
+      U.aviso("Administrador «" + usuario + "» creado.");
+      tabAdministradores();
+    });
+
+    U.$$("[data-borrar]", contenido()).forEach((b) =>
+      b.addEventListener("click", async () => {
+        if (D.usuarios.length <= 1) { U.aviso("Debe quedar al menos un administrador."); return; }
+        const u = D.usuarios.find((x) => x.id === b.dataset.borrar);
+        if (!confirm("¿Eliminar al administrador «" + u.usuario + "»?")) return;
+        await Store.borrar("usuarios", u.id);
+        D.usuarios = D.usuarios.filter((x) => x.id !== u.id);
+        U.aviso("Administrador eliminado.");
+        tabAdministradores();
+      }));
+
+    U.$$("[data-clave]", contenido()).forEach((b) =>
+      b.addEventListener("click", async () => {
+        const nueva = prompt("Nueva contraseña (mínimo 6 caracteres):");
+        if (!nueva || nueva.length < 6) { if (nueva !== null) U.aviso("Demasiado corta."); return; }
+        await Store.cambiarClave(b.dataset.clave, nueva);
+        const u = D.usuarios.find((x) => x.id === b.dataset.clave);
+        if (u) u.hash = await U.sha256(nueva);
+        U.aviso("Contraseña actualizada.");
+        tabAdministradores();
+      }));
+  }
+
   /* ================= Apariencia ================= */
 
   function zonaImagen(id, titulo, valor, pista, esLogo) {
     return (
       '<div class="zona-imagen" id="zona-' + id + '">' +
       '<div class="vista-previa' + (esLogo ? " logo-previa" : "") + '"' +
-      (valor ? ' style="background-image:url(' + JSON.stringify(valor) + ')"' : "") + ">" +
+      (valor ? ' style="background-image:' + U.cssUrl(valor) + '"' : "") + ">" +
       (valor ? "" : "Sin imagen") + "</div>" +
       "<strong style='font-size:14px'>" + titulo + "</strong>" +
       '<p class="suave" style="font-size:12.5px;margin:4px 0 10px">' + pista + "</p>" +
@@ -804,9 +1052,8 @@
       "</div>" +
       (Store.modo === "local"
         ? '<div class="editor"><h3>Zona local</h3>' +
-          '<p class="pista">Herramientas del modo de pruebas de este navegador.</p>' +
+          '<p class="pista">Herramientas del modo de pruebas de este navegador. Los usuarios y contraseñas se gestionan en la pestaña Administradores.</p>' +
           '<div class="barra-acciones">' +
-          '<button class="boton secundario mini" id="cambiar-clave">Cambiar contraseña</button>' +
           '<button class="boton peligro mini" id="reiniciar-datos">Restaurar datos de ejemplo</button>' +
           "</div></div>"
         : "");
@@ -845,13 +1092,6 @@
 
     conectarZonas(["logo"], { logo: "logo" }, tabAjustes);
 
-    const cambiar = U.$("#cambiar-clave");
-    if (cambiar) cambiar.addEventListener("click", async () => {
-      const nueva = prompt("Nueva contraseña de administrador (mínimo 6 caracteres):");
-      if (!nueva || nueva.length < 6) { if (nueva !== null) U.aviso("Demasiado corta."); return; }
-      await Store.crearClave(nueva);
-      U.aviso("Contraseña actualizada.");
-    });
     const reiniciar = U.$("#reiniciar-datos");
     if (reiniciar) reiniciar.addEventListener("click", async () => {
       if (!confirm("Esto borra TODO el contenido local y vuelve a los datos de ejemplo. ¿Continuar?")) return;
